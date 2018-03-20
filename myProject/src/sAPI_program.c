@@ -10,6 +10,9 @@
 
 #define	DELAY_100ms	 	1
 #define	DELAY_50ms 		0
+typedef enum {BLINK_RED=0,BLINK_BLUE,BLINK_GREEN} blink_led_t;
+
+
 /*==================[definiciones y macros]==================================*/
 
 /*==================[definiciones de datos internos]=========================*/
@@ -42,12 +45,13 @@ int main( void ){
    consolePrintlnString( "UART_232 configurada." );
 
    // Crear varias variables del tipo booleano
-   volatile bool_t tec1Value = OFF;
+   bool_t tec1Value = OFF;
    bool_t tec2Value = OFF;
    bool_t tec3Value = OFF;
    bool_t tec4Value = OFF;
    bool_t ledbValue = OFF;
    bool_t blink_status =  DELAY_100ms;
+   blink_led_t blink_led = BLINK_RED;
 
    // ---------- REPETIR POR SIEMPRE --------------------------
    while( TRUE )
@@ -96,10 +100,38 @@ int main( void ){
       gpioWrite( LED3, tec4Value );
 
 
-      /* Intercambiar el valor del pin conectado a LEDB */
+      /* SI la tecla 2 esta selecciona voy eligiendo entre
+       * entre los distintos valores posible del valor blink_led */
+      if(tec2Value == ON){
+    	  switch(blink_led) {
+    	  	  case BLINK_RED:
+    	  		  blink_led = BLINK_GREEN;
+    	  		  gpioWrite(LEDR,OFF);
+    	  		  break;
+    	  	  case BLINK_GREEN:
+    	  		  blink_led = BLINK_BLUE;
+    	  		  gpioWrite(LEDG,OFF);
+    	  		  break;
+    	  	  case BLINK_BLUE:
+    	  		  blink_led = BLINK_RED;
+    	  		  gpioWrite(LEDB,OFF);
+    	  		  break;
+    	  	  default: blink_led = BLINK_RED;
+    	  }
+      }
+      switch(blink_led){
+      	  case BLINK_RED:
+      		gpioToggle( LEDR );
+      		break;
+      	  case BLINK_GREEN:
+      		gpioToggle( LEDG );
+      		break;
+      	  case BLINK_BLUE:
+      		gpioToggle( LEDB );
+      		break;
+      	  default: gpioToggle( LEDR );;
 
-      gpioToggle( LEDR );
-
+      }
 
       /* Mostrar por UART_USB (8N1 115200) el estado del LEDB */
 
