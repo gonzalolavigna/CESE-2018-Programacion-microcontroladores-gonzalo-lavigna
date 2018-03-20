@@ -8,6 +8,8 @@
 
 #include "sapi.h"        // <= Biblioteca sAPI
 
+#define	DELAY_100ms	 	1
+#define	DELAY_50ms 		0
 /*==================[definiciones y macros]==================================*/
 
 /*==================[definiciones de datos internos]=========================*/
@@ -40,11 +42,12 @@ int main( void ){
    consolePrintlnString( "UART_232 configurada." );
 
    // Crear varias variables del tipo booleano
-   bool_t tec1Value = OFF;
+   volatile bool_t tec1Value = OFF;
    bool_t tec2Value = OFF;
    bool_t tec3Value = OFF;
    bool_t tec4Value = OFF;
    bool_t ledbValue = OFF;
+   bool_t blink_status =  DELAY_100ms;
 
    // ---------- REPETIR POR SIEMPRE --------------------------
    while( TRUE )
@@ -57,7 +60,7 @@ int main( void ){
       // presionada y 1 (ON) al liberarla.
       tec1Value = !tec1Value;
       // Escribir el valor leido en el LED correspondiente.
-      gpioWrite( LEDR, tec1Value );
+      //gpioWrite( LEDR, tec1Value );
 
 
       /* Si se presiona TEC2, enciende el LED1 */
@@ -95,13 +98,13 @@ int main( void ){
 
       /* Intercambiar el valor del pin conectado a LEDB */
 
-      gpioToggle( LEDB );
+      gpioToggle( LEDR );
 
 
       /* Mostrar por UART_USB (8N1 115200) el estado del LEDB */
 
       // Leer el estado del pin conectado al led
-      ledbValue = gpioRead( LEDB );
+      ledbValue = gpioRead( LEDR );
       // Chequear si el valor leido es encedido
       if( ledbValue == ON ){
          // Si esta encendido mostrar por UART_USB "LEDB encendido."
@@ -116,9 +119,22 @@ int main( void ){
       }
 
 
-      /* Retardo bloqueante durante 250ms */
+      /* Dependiendo si la tecla esta encendida, se cambia el estado del blink de 100 ms a 50 ms, es un toggle
+       * no se si el entorno presenta una funcion que haga un toogle de una boleana
+       * Tal vez pueda reemplarse esta logica por blink_status = !blink_status, pero esto solo lo ataria a dos
+       * valores */
+      if(tec1Value == ON){
+    	  if(blink_status == DELAY_100ms){
+    		  blink_status = DELAY_50ms;
+    	  }
+    	  else {
+    		  blink_status = DELAY_100ms;
+    	  }
+      }
 
-      delay( 100 );
+      /*Se elije entre dos valores posible de toggle, en caso de necesitar mas valores habia que
+       * hacer un enum con switch case*/
+     blink_status == DELAY_100ms ? delay( 100 ) : delay(50);
    }
 
    // NO DEBE LLEGAR NUNCA AQUI, debido a que a este programa se ejecuta
