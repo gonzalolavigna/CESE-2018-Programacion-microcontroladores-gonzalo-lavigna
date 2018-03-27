@@ -11,14 +11,30 @@
 /*==================[definiciones y macros]==================================*/
 
 typedef enum {LED_ON, LED_OFF} fsmBlinky_t;
+typedef enum {BUTTON_UP,BUTTON_FALLING,BUTTON_DOWN,BUTTON_RISING} fsmDebouncer_t;
 
 /*==================[definiciones de datos internos]=========================*/
 
 #define DELAY_DURATION 1000
 
 fsmBlinky_t state = LED_ON;
+fsmDebouncer_t state_t1 = BUTTON_DOWN;
+fsmDebouncer_t state_t2 = BUTTON_DOWN;
 
 delay_t blinkyDelay;
+delay_t tec1DelayDebouncer;
+delay_t tec2DdelayDebouncer;
+
+/*==================[Tipos LED y Tipos de tiempo]=========================*/
+#define T_1 50
+#define T_2 100
+#define T_3 1000
+
+const uint16_t tiempoEncendido[] = {T_1,T_2,T_3};
+const gpioMap_t leds[] = {LEDR,  LEDG,  LEDB, LED1 , LED2, LED3};
+
+#define TIEMPOS_VALIDOS sizeof(tiempoEncendido)/sizeof(uint16_t) - 1
+#define LEDS_VALIDOS sizeof(leds)/sizeof(gpioMap_t) - 1
 
 /*==================[definiciones de datos externos]=========================*/
 
@@ -48,50 +64,7 @@ int main( void ){
 	{
 		fsmBlinky();
 
-		/* Si se presiona TEC1, enciende el LEDR */
 
-		// Leer pin conectado a la tecla.
-		tec1Value = gpioRead( TEC1 );
-		// Invertir el valor leido, pues lee un 0 (OFF) con tecla
-		// presionada y 1 (ON) al liberarla.
-		tec1Value = !tec1Value;
-		// Escribir el valor leido en el LED correspondiente.
-		gpioWrite( LEDR, tec1Value );
-
-
-		/* Si se presiona TEC2, enciende el LED1 */
-
-		// Leer pin conectado a la tecla.
-		tec2Value = gpioRead( TEC2 );
-		// Invertir el valor leido, pues lee un 0 (OFF) con tecla
-		// presionada y 1 (ON) al liberarla.
-		tec2Value = !tec2Value;
-		// Escribir el valor leido en el LED correspondiente.
-		gpioWrite( LED1, tec2Value );
-
-
-		/* Si se presiona TEC3, enciende el LED2 */
-
-		// Leer pin conectado a la tecla.
-		tec3Value = gpioRead( TEC3 );
-		// Invertir el valor leido, pues lee un 0 (OFF) con tecla
-		// presionada y 1 (ON) al liberarla.
-		tec3Value = !tec3Value;
-		// Escribir el valor leido en el LED correspondiente.
-		gpioWrite( LED2, tec3Value );
-
-
-		/* Si se presiona TEC4, enciende el LED3 */
-
-		// Leer pin conectado a la tecla.
-		tec4Value = gpioRead( TEC4 );
-		// Invertir el valor leido, pues lee un 0 (OFF) con tecla
-		// presionada y 1 (ON) al liberarla.
-		tec4Value = !tec4Value;
-		// Escribir el valor leido en el LED correspondiente.
-		gpioWrite( LED3, tec4Value );
-
-		//delay(100);
 
 
 	}
