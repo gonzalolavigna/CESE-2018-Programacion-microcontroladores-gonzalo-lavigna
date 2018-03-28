@@ -13,8 +13,8 @@
 typedef enum {LED_ON, LED_OFF} fsmBlinky_t;
 typedef enum {BUTTON_UP,BUTTON_FALLING,BUTTON_DOWN,BUTTON_RISING} fsmDebouncer_t;
 typedef struct {
-	bool_t tecPresseed = FALSE;
-	bool_t tecReleased = FALSE;
+	bool_t tecPresseed;
+	bool_t tecReleased;
 }tecEvents_t;
 
 /*==================[definiciones de datos internos]=========================*/
@@ -28,7 +28,7 @@ fsmDebouncer_t state_t2 = BUTTON_DOWN;
 //Definicion de delays para el delay y tambien para los correspondientes debouncer
 delay_t blinkyDelay;
 delay_t tec1DelayDebouncer;
-delay_t tec2DdelayDebouncer;
+delay_t tec2DelayDebouncer;
 //Definicion de eventos para las correspondientes teclas.
 tecEvents_t tec1Events;
 tecEvents_t tec2Events;
@@ -48,7 +48,7 @@ const gpioMap_t leds[] = {LEDR,  LEDG,  LEDB, LED1 , LED2, LED3};
 /*==================[definiciones de datos externos]=========================*/
 
 /*==================[declaraciones de funciones internas]====================*/
-void fsmBlinky(void);
+void fsmBlinky(uint8_t indiceLed, uint8_t indiceTiempo);
 void fsmTec1Debouncer (void);
 void fsmTec2Debouncer (void);
 
@@ -64,20 +64,31 @@ int main( void ){
 	uint8_t indiceTiempo = 0;
 	uint8_t indiceLed = 0;
 	// Crear varias variables del tipo booleano
-	bool_t tec1Value = OFF;
-	bool_t tec2Value = OFF;
-	bool_t tec3Value = OFF;
-	bool_t tec4Value = OFF;
+	tec1Events.tecPresseed = FALSE;
+	tec1Events.tecReleased = FALSE;
+	tec2Events.tecPresseed = FALSE;
+	tec2Events.tecReleased = FALSE;
+
 
 	// ---------- REPETIR POR SIEMPRE --------------------------
 	while( TRUE )
 	{
-		//fsmBlinky();
+		fsmBlinky(indiceLed,indiceTiempo);
 		fsmTec1Debouncer();
-		if(tec1Events.tecPresseed == TRUE)
-			gpioWrite(leds[0],ON);
-		if(tec1Events.tecReleased == TRUE)
-			gpioWrite(leds[0],OFF);
+		fsmTec2Debouncer();
+		if(tec1Events.tecPresseed == TRUE){
+			if(indiceTiempo >= TIEMPOS_VALIDOS)
+				indiceTiempo = 0;
+			else
+				indiceTiempo ++;
+		}
+		if(tec2Events.tecPresseed == TRUE){
+			if(indiceLed >= LEDS_VALIDOS)
+				indiceLed = 0;
+			else
+				indiceLed ++;
+		}
+
 	}
 
 	// NO DEBE LLEGAR NUNCA AQUI, debido a que a este programa se ejecuta
@@ -90,17 +101,18 @@ int main( void ){
 
 /*==================[definiciones de funciones internas]=====================*/
 
-void fsmBlinky(void){
+void fsmBlinky(uint8_t indiceLed, uint8_t indiceTiempo){
+	static uint8_t indiceLedInternal = 0;
+	static uint8_t indiceTiempoInternal = 0;
 
 	switch(state){
-
 	case LED_ON:
 		/* Si el delay no está corriendo, lo configuro y cambio el estado del led*/
 		if (!blinkyDelay.running){
-			delayConfig(&blinkyDelay, DELAY_DURATION);
+			delayConfig(&blinkyDelay, tiempoEncendido[indiceTiempoInternal]);
 			/* para que el delay arranque hay que leerlo*/
 			delayRead(&blinkyDelay);
-			gpioToggle( LEDB );
+			gpioToggle( leds[indiceLedInternal] );
 		}
 		/* Si el tiempo del delay expiró, cambio el estado de la FSM*/
 		if (delayRead(&blinkyDelay))
@@ -110,14 +122,17 @@ void fsmBlinky(void){
 	case LED_OFF:
 		/* Si el delay no está corriendo, lo configuro y cambio el estado del led*/
 		if (!blinkyDelay.running){
-			delayConfig(&blinkyDelay, DELAY_DURATION);
+			delayConfig(&blinkyDelay, tiempoEncendido[indiceTiempoInternal]);
 			/* para que el delay arranque hay que leerlo*/
 			delayRead(&blinkyDelay);
-			gpioToggle( LEDB );
+			gpioToggle( leds[indiceLedInternal] );
 		}
 		/* Si el tiempo del delay expiró, cambio el estado de la FSM*/
-		if (delayRead(&blinkyDelay))
+		if (delayRead(&blinkyDelay)){
 			state = LED_ON;
+			indiceLedInternal = indiceLed;
+			indiceTiempoInternal = indiceTiempo;
+		}
 		break;
 
 	/* Condición de error, reinicio la máquina de estados*/
@@ -205,9 +220,91 @@ void fsmTec1Debouncer (void) {
 			}
 		}
 		break;
+	default:
+		state_t1 = BUTTON_DOWN;
+		break;
 	}
 }
 
+void fsmTec2Debouncer (void) {
+	switch(state_t2){
+	case BUTTON_UP:
+		tec2Events.tecPresseed = FALSE;
+		tec2Events.tecReleased = FALSE;
+		//Si la tecla no esta pulsada
+		if (gpioRead(TEC2)){
+			state_t2 = BUTTON_FALLING;
+		}
+		else {
+			state_t2 = BUTTON_UP;
+		}
+		break;
+	case BUTTON_FALLING:
+		tec2Events.tecPresseed = FALSE;
+		tec2Events.tecReleased = FALSE;
+		//Si el delay no esta corriendo lo pongo a correr
+		if(!tec2DelayDebouncer.running){
+			delayConfig(&tec2DelayDebouncer,T_Debouncer);
+			//Activo el delay para que empiece a correr
+			delayRead(&tec2DelayDebouncer);
+			state_t2 = BUTTON_FALLING;
+		}
+		//Tiempo expirado
+		if(delayRead(&tec2DelayDebouncer)){
+			//Si la tecla no esta pulsada
+			if(gpioRead(TEC2)){
+				tec2Events.tecReleased = TRUE;
+				tec2Events.tecPresseed = FALSE;
+				state_t2 = BUTTON_DOWN;
+			}
+			else {
+				tec2Events.tecReleased = FALSE;
+				tec2Events.tecPresseed = FALSE;
+				state_t2 = BUTTON_UP;
+			}
+		}
+		break;
+	case BUTTON_DOWN:
+		tec2Events.tecPresseed = FALSE;
+		tec2Events.tecReleased = FALSE;
+		//Si la tecla esta pulsada
+		if (!gpioRead(TEC2)){
+			state_t2 = BUTTON_RISING;
+		}
+		else {
+			state_t2 = BUTTON_DOWN;
+		}
+		break;
+	case BUTTON_RISING:
+		tec2Events.tecPresseed = FALSE;
+		tec2Events.tecReleased = FALSE;
+		//Si el delay no esta corriendo lo pongo a correr
+		if(!tec2DelayDebouncer.running){
+			delayConfig(&tec2DelayDebouncer,T_Debouncer);
+			//Activo el delay para que empiece a correr
+			delayRead(&tec2DelayDebouncer);
+			state_t2 = BUTTON_RISING;
+		}
+		//Tiempo expirado
+		if(delayRead(&tec2DelayDebouncer)){
+			//Si la tecla  esta pulsada
+			if(!gpioRead(TEC2)){
+				tec2Events.tecReleased = FALSE;
+				tec2Events.tecPresseed = TRUE;
+				state_t2 = BUTTON_UP;
+			}
+			else {
+				tec2Events.tecReleased = FALSE;
+				tec2Events.tecPresseed = FALSE;
+				state_t2 = BUTTON_DOWN;
+			}
+		}
+		break;
+	default:
+		state_t2 = BUTTON_DOWN;
+		break;
+	}
+}
 
 /*==================[definiciones de funciones externas]=====================*/
 
