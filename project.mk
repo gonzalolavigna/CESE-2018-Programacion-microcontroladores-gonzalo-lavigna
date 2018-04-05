@@ -3,7 +3,7 @@
 #------------------------------------------------------------------------------
 
 # Project name
-PROJECT_NAME=ejer2-template
+PROJECT_NAME=ejer3-template
 
 # Project path 
 # (relative to this folder, leave void if the project is in this folder)
