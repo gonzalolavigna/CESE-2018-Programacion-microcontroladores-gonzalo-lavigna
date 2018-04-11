@@ -3,7 +3,7 @@
 #------------------------------------------------------------------------------
 
 # Project name
-PROJECT_NAME=Ejercicio3_GonzaloLavigna
+PROJECT_NAME=Ejercicio4_GonzaloLavigna
 
 # Project path 
 # (relative to this folder, leave void if the project is in this folder)

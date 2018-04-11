@@ -1,6 +1,6 @@
 
-misProyectos/ejer4-template/out/ejer4-template.elf:     file format elf32-littlearm
-misProyectos/ejer4-template/out/ejer4-template.elf
+ejer4-template/out/ejer4-template.elf:     file format elf32-littlearm
+ejer4-template/out/ejer4-template.elf
 architecture: arm, flags 0x00000112:
 EXEC_P, HAS_SYMS, D_PAGED
 start address 0x1a002605
@@ -64,17 +64,17 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING
  22 .debug_macro  0000a6cc  00000000  00000000  00025f74  2**0
                   CONTENTS, READONLY, DEBUGGING
- 23 .debug_line   0000c10f  00000000  00000000  00030640  2**0
+ 23 .debug_line   0000c5a1  00000000  00000000  00030640  2**0
                   CONTENTS, READONLY, DEBUGGING
- 24 .debug_str    0001c072  00000000  00000000  0003c74f  2**0
+ 24 .debug_str    0001c058  00000000  00000000  0003cbe1  2**0
                   CONTENTS, READONLY, DEBUGGING
- 25 .comment      00000070  00000000  00000000  000587c1  2**0
+ 25 .comment      00000070  00000000  00000000  00058c39  2**0
                   CONTENTS, READONLY
- 26 .ARM.attributes 00000039  00000000  00000000  00058831  2**0
+ 26 .ARM.attributes 00000039  00000000  00000000  00058ca9  2**0
                   CONTENTS, READONLY
- 27 .debug_frame  000011fc  00000000  00000000  0005886c  2**2
+ 27 .debug_frame  000011fc  00000000  00000000  00058ce4  2**2
                   CONTENTS, READONLY, DEBUGGING
- 28 .debug_ranges 000000a0  00000000  00000000  00059a68  2**0
+ 28 .debug_ranges 000000a0  00000000  00000000  00059ee0  2**0
                   CONTENTS, READONLY, DEBUGGING
 SYMBOL TABLE:
 1a000000 l    d  .text	00000000 .text
@@ -1080,7 +1080,6 @@ static void taskMenuUpdate(void){
 1a00045a:	2000      	movs	r0, #0
 1a00045c:	490f      	ldr	r1, [pc, #60]	; (1a00049c <taskMenuUpdate+0x70>)
 1a00045e:	f000 f941 	bl	1a0006e4 <uartWriteString>
-				//debugPrintlnString(menu);
 				debugPrintlnString( "Caracter recibido: T\n\r");
 1a000462:	4c0f      	ldr	r4, [pc, #60]	; (1a0004a0 <taskMenuUpdate+0x74>)
 1a000464:	7820      	ldrb	r0, [r4, #0]
@@ -1686,7 +1685,7 @@ void uartWriteString( uartMap_t uart, char* str ){
 1a0006e4:	b538      	push	{r3, r4, r5, lr}
 1a0006e6:	4605      	mov	r5, r0
 1a0006e8:	460c      	mov	r4, r1
-   while(*str != NULL){
+   while(*str != 0){
 1a0006ea:	e003      	b.n	1a0006f4 <uartWriteString+0x10>
 	  uartWriteByte( uart, (uint8_t)*str );
 1a0006ec:	4628      	mov	r0, r5
@@ -1698,7 +1697,7 @@ void uartWriteString( uartMap_t uart, char* str ){
 
 
 void uartWriteString( uartMap_t uart, char* str ){
-   while(*str != NULL){
+   while(*str != 0){
 1a0006f4:	7821      	ldrb	r1, [r4, #0]
 1a0006f6:	2900      	cmp	r1, #0
 1a0006f8:	d1f8      	bne.n	1a0006ec <uartWriteString+0x8>
