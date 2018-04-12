@@ -48,7 +48,7 @@
 DEBUG_PRINT_ENABLE
 
 #define CONSOLE_TIME_PERIOD 10
-#define APP_TIME_PERIOD 50
+#define APP_TIME_PERIOD 5
 
 /*==================[definiciones de datos internos]=========================*/
 

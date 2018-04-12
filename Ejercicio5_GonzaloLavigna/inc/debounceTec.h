@@ -14,12 +14,9 @@ typedef enum {
 
 void debounceInit (void);
 void debounceUpdate (void);
-uint8_t getTeclaStatus (buttonGpioIndex_t tecla_index);
+buttonGpioStatus_t getTeclaStatus (buttonGpioIndex_t tecla_index);
 
-void debounce_tecla_1(void);
-void debounce_tecla_2(void);
-void debounce_tecla_3(void);
-void debounce_tecla_4(void);
+
 
 
 

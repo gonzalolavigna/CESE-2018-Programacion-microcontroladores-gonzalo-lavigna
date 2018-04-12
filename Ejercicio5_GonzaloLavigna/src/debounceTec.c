@@ -14,6 +14,10 @@ static uint8_t button_status[] = {TECLA_NO_PULSADA,TECLA_NO_PULSADA,TECLA_NO_PUL
 
 #define TECLAS_VALIDAS sizeof(button_status)/sizeof(uint8_t) - 1
 
+static void debounce_tecla_1(void);
+static void debounce_tecla_2(void);
+static void debounce_tecla_3(void);
+static void debounce_tecla_4(void);
 static void fsmDebounceInit(fsmDebounceData_t * dataStruct, gpioMap_t dbnTec);
 static void fsmDebounceUpdate(fsmDebounceData_t * ptrDataStruct);
 static void buttonPressed(gpioMap_t tecla);
@@ -108,6 +112,6 @@ void updateTeclaStatus (buttonGpioStatus_t estado_tecla, buttonGpioIndex_t tecla
 	button_status[tecla_index]=estado_tecla;
 }
 
-uint8_t getTeclaStatus (buttonGpioIndex_t tecla_index){
+buttonGpioStatus_t getTeclaStatus (buttonGpioIndex_t tecla_index){
 	return button_status[tecla_index];
 }
