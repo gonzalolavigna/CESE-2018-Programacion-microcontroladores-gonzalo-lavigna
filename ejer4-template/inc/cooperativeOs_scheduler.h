@@ -52,7 +52,7 @@ extern "C" {
 /* The maximum number of tasks required at any one time during the execution
    of the program. MUST BE ADJUSTED FOR EACH NEW PROJECT */
 #ifndef SCHEDULER_MAX_TASKS
-   #define SCHEDULER_MAX_TASKS   (3)
+   #define SCHEDULER_MAX_TASKS   (5)
 #endif
 
 /*==================[typedef]================================================*/
