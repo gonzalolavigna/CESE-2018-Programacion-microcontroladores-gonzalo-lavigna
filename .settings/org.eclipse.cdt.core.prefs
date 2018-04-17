@@ -1,0 +1,6 @@
+eclipse.preferences.version=1
+environment/project/cdt.managedbuild.toolchain.gnu.cross.base.2017157098/BOARD/delimiter=\:
+environment/project/cdt.managedbuild.toolchain.gnu.cross.base.2017157098/BOARD/operation=append
+environment/project/cdt.managedbuild.toolchain.gnu.cross.base.2017157098/BOARD/value=edu_ciaa_nxp
+environment/project/cdt.managedbuild.toolchain.gnu.cross.base.2017157098/append=true
+environment/project/cdt.managedbuild.toolchain.gnu.cross.base.2017157098/appendContributed=true

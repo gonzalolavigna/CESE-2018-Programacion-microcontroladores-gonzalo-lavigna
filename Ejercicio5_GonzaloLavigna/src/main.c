@@ -43,12 +43,14 @@
 #include "sapi.h"
 #include "PCLink.h"
 #include "debounceTec.h"
+#include "leds.h"
+#include "alarma.h"
 
 /*==================[macros and definitions]=================================*/
 DEBUG_PRINT_ENABLE
 
 #define CONSOLE_TIME_PERIOD 10
-#define APP_TIME_PERIOD 5
+#define APP_TIME_PERIOD 100
 
 /*==================[definiciones de datos internos]=========================*/
 
@@ -56,7 +58,7 @@ DEBUG_PRINT_ENABLE
 /*==================[definiciones de datos externos]=========================*/
 
 /*==================[declaraciones de funciones internas]====================*/
-void app (void);
+//void app (void);
 /*==================[declaraciones de funciones externas]====================*/
 
 /*==================[funcion principal]======================================*/
@@ -67,13 +69,17 @@ int main( void ){
 	// Inicializar UART_USB como salida de consola
 	debugPrintConfigUart( UART_USB, 115200 );
 	debugPrintlnString( "UART_USB configurada.\n\r" );
-	debounceInit();
+	fsmDebounceInit();
+	ledInit();
+	alarmaInit();
 	//FUNCION que inicializa el planificador de tareas
 	schedulerInit();
 	//Cargar las tareas del sistema operativo con sus periodicidades
-	schedulerAddTask( (sAPI_FuncPtr_t) debounceUpdate, 0, BUTTONS_TIME_PERIOD );
-	schedulerAddTask( (sAPI_FuncPtr_t) PC_LINK_Update, 1, CONSOLE_TIME_PERIOD );
-	schedulerAddTask( (sAPI_FuncPtr_t) app,2, APP_TIME_PERIOD );
+	schedulerAddTask( (sAPI_FuncPtr_t) fsmDebounceUpdate, 0, BUTTONS_TIME_PERIOD );
+	schedulerAddTask( (sAPI_FuncPtr_t) PC_Link_Update_TX_BURST, 1, CONSOLE_TX_TIME_PERIOD );
+	schedulerAddTask( (sAPI_FuncPtr_t) PC_Link_Update_RX, 2, CONSOLE_RX_TIME_PERIOD );
+	schedulerAddTask( (sAPI_FuncPtr_t) alarmaUpdate,3, ALARMA_TIME_PERIOD );
+	schedulerAddTask( (sAPI_FuncPtr_t) ledUpdate,4, LEDS_TIME_PERIOD );
 
 
 
@@ -88,17 +94,38 @@ int main( void ){
 	return 0;
 }
 
+uint8_t line_reception_buffer[50];
 /*==================[definiciones de funciones internas]=====================*/
 void app (void) {
-	if(getTeclaStatus(TEC1_INDICE)==TECLA_PULSADA)
-		PC_LINK_Write_String_To_Buffer("TEC 1 PULSADA\n");
-	if(getTeclaStatus(TEC2_INDICE)==TECLA_PULSADA)
-		PC_LINK_Write_String_To_Buffer("TEC 2 PULSADA\n");
-	if(getTeclaStatus(TEC3_INDICE)==TECLA_PULSADA)
-		PC_LINK_Write_String_To_Buffer("TEC 3 PULSADA\n");
-	if(getTeclaStatus(TEC4_INDICE)==TECLA_PULSADA)
-		PC_LINK_Write_String_To_Buffer("TEC 4 PULSADA\n");
+	static uint32_t blink_period = 500;
+	uint32_t line_receive_length;
+	if(getTeclaEventReleasedWithClear(TEC1_INDICE)==TRUE){
+			PC_LINK_Write_String_To_Buffer("TEC 1 PULSADA\n");
+			setLedConfiguration(LED_RED_INDICE,LED_BI_LEVEL_HIGH,0);
+		}
+	if(getTeclaEventReleasedWithClear(TEC2_INDICE)==TRUE){
+			PC_LINK_Write_String_To_Buffer("TEC 2 PULSADA\n");
+			setLedConfiguration(LED_RED_INDICE,LED_BI_LEVEL_LOW,0);
+		}
+	if(getTeclaEventReleasedWithClear(TEC3_INDICE)==TRUE){
+			PC_LINK_Write_String_To_Buffer("TEC 3 PULSADA\n");
+			setLedConfiguration(LED_RED_INDICE,LED_BLINK,blink_period);
+			blink_period += 100;
+		}
+	if(getTeclaEventReleasedWithClear(TEC4_INDICE)==TRUE){
+			PC_LINK_Write_String_To_Buffer("TEC 4 PULSADA\n");
+			setLedConfiguration(LED_RED_INDICE,LED_BLINK,blink_period);
+			blink_period -= 100;
+		}
+	line_receive_length = PC_LINK_Find_Line_From_Buffer();
+	if(line_receive_length != LINE_NOT_FOUND){
+		PC_LINK_Get_String_From_Buffer(line_reception_buffer,line_receive_length);
+		PC_LINK_Write_String_To_Buffer_ln("Linea Recibida\n");
+		PC_LINK_Write_String_To_Buffer_ln(line_reception_buffer);
+	}
+
 }
+
 
 /*==================[definiciones de funciones externas]=====================*/
 

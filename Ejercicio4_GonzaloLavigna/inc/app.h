@@ -1,7 +1,6 @@
 #include "sapi.h"   // <= sAPI header
 
-#define LINE_HIT 0
-#define LINE_NOT_FOUND 1
+#define LINE_NOT_FOUND 0
 
 void app (void);
 void puerto_led_pos_menu (void);

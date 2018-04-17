@@ -2,116 +2,87 @@
 #include "debounceTec.h"
 DEBUG_PRINT_ENABLE
 
-typedef enum {BUTTON_UP, BUTTON_FALLING, BUTTON_DOWN, BUTTON_RAISING} fsmDebounce_t;
+
+
+
+
 typedef struct {
 	gpioMap_t tecla;
 	fsmDebounce_t state;
-	delay_t delay;
+	bool_t pressed_pending_event;
+	bool_t released_pending_event;
 }fsmDebounceData_t;
 
-static fsmDebounceData_t dataTecla1,dataTecla2,dataTecla3,dataTecla4;
-static uint8_t button_status[] = {TECLA_NO_PULSADA,TECLA_NO_PULSADA,TECLA_NO_PULSADA,TECLA_NO_PULSADA};
+gpioMap_t teclas[] = {TEC1,TEC2,TEC3,TEC4};
+#define TECLAS_VALIDAS sizeof(teclas)/sizeof(gpioMap_t)
 
-#define TECLAS_VALIDAS sizeof(button_status)/sizeof(uint8_t) - 1
+static fsmDebounceData_t teclaArray[TECLAS_VALIDAS];
 
-static void debounce_tecla_1(void);
-static void debounce_tecla_2(void);
-static void debounce_tecla_3(void);
-static void debounce_tecla_4(void);
-static void fsmDebounceInit(fsmDebounceData_t * dataStruct, gpioMap_t dbnTec);
-static void fsmDebounceUpdate(fsmDebounceData_t * ptrDataStruct);
-static void buttonPressed(gpioMap_t tecla);
-static void buttonReleased(gpioMap_t tecla);
-static void updateTeclaStatus (buttonGpioStatus_t estado_tecla, buttonGpioIndex_t tecla_index);
 
-void debounce_tecla_1(void){
-	fsmDebounceUpdate(&dataTecla1);
-}
-void debounce_tecla_2(void){
-	fsmDebounceUpdate(&dataTecla2);
-}
-void debounce_tecla_3(void){
-	fsmDebounceUpdate(&dataTecla3);
-}
-void debounce_tecla_4(void){
-	fsmDebounceUpdate(&dataTecla4);
+void fsmDebounceInit(void){
+	uint32_t i= 0;
+	for(i=0; i < TECLAS_VALIDAS; i++){
+		teclaArray[i].state = BUTTON_UP;
+		teclaArray[i].tecla = teclas[i];
+        teclaArray[i].pressed_pending_event = FALSE;
+        teclaArray[i].released_pending_event = FALSE;
+	}
 }
 
-void debounceInit (void){
-	fsmDebounceInit(&dataTecla1,TEC1);
-	fsmDebounceInit(&dataTecla2,TEC2);
-	fsmDebounceInit(&dataTecla3,TEC3);
-	fsmDebounceInit(&dataTecla4,TEC4);
-
-}
-
-void debounceUpdate (void){
-	fsmDebounceUpdate(&dataTecla1);
-	fsmDebounceUpdate(&dataTecla2);
-	fsmDebounceUpdate(&dataTecla3);
-	fsmDebounceUpdate(&dataTecla4);
-}
-
-void fsmDebounceInit(fsmDebounceData_t * dataStruct, gpioMap_t dbnTec){
-	dataStruct->tecla = dbnTec;
-	dataStruct->state = BUTTON_DOWN;
-	return;
-}
-
-void fsmDebounceUpdate(fsmDebounceData_t * ptrDataStruct){
-	switch(ptrDataStruct->state){
-	case BUTTON_UP:
-		if(!gpioRead(ptrDataStruct->tecla))
-			ptrDataStruct->state=BUTTON_FALLING;
-		break;
-	case BUTTON_FALLING:
-		if(!gpioRead(ptrDataStruct->tecla)){
-			buttonPressed(ptrDataStruct->tecla);
-			ptrDataStruct->state=BUTTON_DOWN;
+void fsmDebounceUpdate(void){
+	uint32_t i = 0;
+	for(i=0; i < TECLAS_VALIDAS ; i++){
+		switch(teclaArray[i].state){
+		case BUTTON_UP:
+			if(!gpioRead(teclaArray[i].tecla))
+				teclaArray[i].state=BUTTON_FALLING;
+			break;
+		case BUTTON_FALLING:
+			if(!gpioRead(teclaArray[i].tecla)){
+				teclaArray[i].pressed_pending_event = TRUE;
+				teclaArray[i].state=BUTTON_DOWN;
+			}
+			else
+				teclaArray[i].state = BUTTON_UP;
+			break;
+		case BUTTON_DOWN:
+			if(gpioRead(teclaArray[i].tecla))
+				teclaArray[i].state = BUTTON_RAISING;
+			break;
+		case BUTTON_RAISING:
+			if(gpioRead(teclaArray[i].tecla)){
+				teclaArray[i].released_pending_event = TRUE;
+				teclaArray[i].state =BUTTON_UP;
+			}
+			break;
+		default:
+			break;
 		}
-		else
-			ptrDataStruct->state = BUTTON_UP;
-		break;
-	case BUTTON_DOWN:
-		if(gpioRead(ptrDataStruct->tecla))
-			ptrDataStruct->state = BUTTON_RAISING;
-		break;
-	case BUTTON_RAISING:
-		if(gpioRead(ptrDataStruct->tecla)){
-			buttonReleased(ptrDataStruct->tecla);
-			ptrDataStruct->state=BUTTON_UP;
-		}
-		break;
-	default:
-		break;
 	}
 }
 
-void buttonPressed(gpioMap_t tecla){
-	switch(tecla){
-	case TEC1:updateTeclaStatus(TECLA_PULSADA,TEC1_INDICE); break;
-	case TEC2:updateTeclaStatus(TECLA_PULSADA,TEC2_INDICE); break;
-	case TEC3:updateTeclaStatus(TECLA_PULSADA,TEC3_INDICE); break;
-	case TEC4:updateTeclaStatus(TECLA_PULSADA,TEC4_INDICE); break;
-	default: break;
+fsmDebounce_t getTeclaState (buttonGpioIndex_t tecla_index){
+	return teclaArray[tecla_index].state;
+}
+
+
+bool_t getTeclaEventPressedWithClear (buttonGpioIndex_t tecla_index){
+	if (teclaArray[tecla_index].pressed_pending_event == TRUE){
+		teclaArray[tecla_index].pressed_pending_event = FALSE;
+		return TRUE;
 	}
+	else return FALSE;
+
 }
-
-void buttonReleased(gpioMap_t tecla){
-
-switch(tecla){
-	case TEC1:updateTeclaStatus(TECLA_NO_PULSADA,TEC1_INDICE); break;
-	case TEC2:updateTeclaStatus(TECLA_NO_PULSADA,TEC2_INDICE); break;
-	case TEC3:updateTeclaStatus(TECLA_NO_PULSADA,TEC3_INDICE); break;
-	case TEC4:updateTeclaStatus(TECLA_NO_PULSADA,TEC4_INDICE); break;
-	default: break;
+bool_t getTeclaEventReleasedWithClear (buttonGpioIndex_t tecla_index){
+	if (teclaArray[tecla_index].released_pending_event == TRUE){
+		teclaArray[tecla_index].released_pending_event = FALSE;
+		return TRUE;
 	}
+	else return FALSE;
 }
 
-void updateTeclaStatus (buttonGpioStatus_t estado_tecla, buttonGpioIndex_t tecla_index){
-	button_status[tecla_index]=estado_tecla;
-}
 
-buttonGpioStatus_t getTeclaStatus (buttonGpioIndex_t tecla_index){
-	return button_status[tecla_index];
+uint32_t getTeclaNumber (void){
+	return TECLAS_VALIDAS;
 }
